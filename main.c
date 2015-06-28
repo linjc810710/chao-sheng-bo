@@ -287,9 +287,28 @@ void main(void)
   FunctionInit();
   while (1)
   {
+  FIRST:
     TIM2_SetCounter(0);
     HSR_Trig();
-    while(HSR_GET_SIGNAL()== 0);
+    TIM4_Cmd(ENABLE);
+    while(HSR_GET_SIGNAL()== 0)
+    {
+      if(gled_flag == 1)
+      {
+        gled_flag = 0;
+        display_count++;
+      }
+      if(display_count> 15)
+      {
+        display_count = 0;
+        TIM4_Cmd(DISABLE);
+        HSR_POWER_OFF();
+        Delay(4000);
+        HSR_POWER_ON();
+        Delay(4000); 
+        goto FIRST;        
+      }
+    }
     TIM2_Cmd(ENABLE);
     while(HSR_GET_SIGNAL()!= 0)
     {
@@ -301,12 +320,13 @@ void main(void)
          Delay(4000);
          HSR_POWER_ON();
          Delay(4000);
-         continue;
+         goto FIRST;
       }      
     }
     TIM2_Cmd(DISABLE);
     value = TIM2_GetCounter();
     Cal_Distance();
+    TIM4_SetCounter(0);
     TIM4_Cmd(ENABLE);  
     while(display_count++ < 50)
     {
